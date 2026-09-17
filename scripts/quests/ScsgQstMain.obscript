@@ -1,0 +1,46 @@
+ScriptName ScsgQstMain
+
+; Configs
+short soulGemReplaceSoul
+short soulGemShrinkToFit
+short soulGemKeepOnlyFull
+short blackSoulGemKeepOnlyGrand
+float azurasStarChargeRate
+short azurasStarMaxCharges
+short showCaptureDetail
+short debug
+
+; Globals
+float fQuestDelayTime
+short initDone
+short initSucceeded
+array_var gemBaseObjs
+array_var soulGemCharges
+array_var capturedSouls
+array_var blackCapturedSouls
+short hasCaptures
+short hasBlackCaptures
+short azurasStarCharges
+short azurasStarChargesUpdated
+short azurasStarLevel
+short azurasStarLevelHasUpdate
+short azurasStarLevelUpdated
+short isDumpingDebugInfo
+
+Begin GameMode
+	if GetGameLoaded
+		Call ScsgFnInit
+	endif
+	if initSucceeded == 0
+		return
+	endif
+	let initDone := 1
+	let isDumpingDebugInfo := 1
+End
+
+Begin MenuMode 3 ; Console
+	if debug >= 3 && isDumpingDebugInfo
+		Call ScsgFnPrintState
+		let isDumpingDebugInfo := 0
+	endif
+End

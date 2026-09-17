@@ -1,0 +1,23 @@
+ScriptName ScsgFnHandleAzurasStarLevelHasUpdate
+
+short level
+ref item
+
+Begin _Function {}
+	if SCSG.azurasStarLevelHasUpdate == 0 || SCSG.azurasStarLevelUpdated
+		return
+	endif
+	if eval (Player.GetItemCount AzurasStar) == 0
+		return
+	endif
+
+	let item := (Player.GetInvRefsForItem AzurasStar)[0]
+	let level := item.GetCurrentSoulLevel
+	if level != SCSG.azurasStarLevel || SCSG.debug >= 2
+		DebugPrint "Updating Azura's Star level from %g to %g" level SCSG.azurasStarLevel
+	endif
+	item.SetCurrentSoulLevel SCSG.azurasStarLevel
+	let SCSG.azurasStarLevelHasUpdate := 0
+	let SCSG.azurasStarLevelUpdated := 1
+	SetFunctionValue 1
+End

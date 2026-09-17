@@ -1,0 +1,31 @@
+ScriptName ScsgFnAddAzurasStarChargesBlack
+
+float charges
+short level
+
+Begin _Function {}
+	if SCSG.hasBlackCaptures == 0 || SCSG.azurasStarChargeRate <= 0
+		return
+	endif
+	if eval (Player.GetItemCount AzurasStar) == 0
+		return
+	endif
+
+	let charges := 0
+	let level := 1
+	while level <= 5
+		let charges += (SCSG.blackCapturedSouls[level] * SCSG.soulGemCharges[level]) * SCSG.azurasStarChargeRate
+		let level += 1
+	loop
+
+	if charges == 0
+		return
+	endif
+
+	let SCSG.azurasStarCharges += charges
+	if SCSG.azurasStarCharges > SCSG.azurasStarMaxCharges
+		let SCSG.azurasStarCharges := SCSG.azurasStarMaxCharges
+	endif
+	DebugPrint "Increasing Azura's Star charges by %g to %g/%g" charges SCSG.azurasStarCharges SCSG.azurasStarMaxCharges
+	let SCSG.azurasStarChargesUpdated := 1
+End

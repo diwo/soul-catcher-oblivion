@@ -1,0 +1,304 @@
+ScriptName ScsgFnProcessSouls
+
+short fillCount
+short soulSize
+short gemSize
+short capacity
+short level
+short existingSoulLevel
+short count
+short failsafeLoopCount
+array_var availGems
+array_var gemsToAdd
+array_var gemsToRemove
+short useAzurasStarAsGem
+short azurasStarLevelCurrent
+short azurasStarLevelNew
+ref gemBaseObj
+ref objRef
+
+Begin _Function {}
+	if SCSG.hasCaptures == 0 || SCSG.azurasStarLevelHasUpdate || SCSG.azurasStarLevelUpdated
+		return
+	endif
+
+	Call ScsgFnAddAzurasStarCharges
+
+	if SCSG.debug >= 2
+		DebugPrint "Reassigning captured souls to appropriate soul gems..."
+	endif
+
+	let availGems := ar_List 0
+	let capacity := 1
+	while capacity <= 5
+		let availGems[capacity] := ar_List
+		let level := 0
+		while level <= capacity
+			let gemBaseObj := SCSG.gemBaseObjs[capacity][level]
+			let availGems[capacity][level] := Player.GetItemCount gemBaseObj
+			let level += 1
+		loop
+		let capacity += 1
+	loop
+
+	let gemsToAdd := ar_List 0
+	let gemsToRemove := ar_List 0
+	let capacity := 1
+	while capacity <= 5
+		let gemsToAdd[capacity] := ar_List 0, 0, 0, 0, 0, 0
+		let gemsToRemove[capacity] := ar_List 0, 0, 0, 0, 0, 0
+		let capacity += 1
+	loop
+
+	let useAzurasStarAsGem := 0
+	if eval SCSG.azurasStarChargeRate == 0 && (Player.GetItemCount AzurasStar) == 1
+		let objRef := (Player.GetInvRefsForItem AzurasStar)[0]
+		let azurasStarLevelCurrent := objRef.GetCurrentSoulLevel
+		let azurasStarLevelNew := 0
+		let useAzurasStarAsGem := 1
+	endif
+
+	if SCSG.debug >= 3
+		DebugPrint "Config: soulGemReplaceSoul=%g soulGemShrinkToFit=%g soulGemKeepOnlyFull=%g azurasStarChargeRate=%g" SCSG.soulGemReplaceSoul SCSG.soulGemShrinkToFit SCSG.soulGemKeepOnlyFull SCSG.azurasStarChargeRate
+		DebugPrint "Initial state:"
+		Call ScsgFnProcessSoulsPrintState SCSG.capturedSouls availGems gemsToAdd gemsToRemove
+		DebugPrint "Allocating souls to equal or larger empty gems"
+	endif
+
+	let fillCount := 0
+
+	let level := 5
+	while level >= 1
+		; Fill Azura's Star first if empty
+		if eval SCSG.capturedSouls[level] > 0 && useAzurasStarAsGem && azurasStarLevelCurrent == 0 && azurasStarLevelNew == 0
+			let SCSG.capturedSouls[level] -= 1
+			let azurasStarLevelNew := level
+			let fillCount += 1
+			let soulSize := level
+		endif
+
+		let capacity := level
+		while capacity <= 5
+			if capacity > level && SCSG.soulGemKeepOnlyFull
+				break
+			endif
+			let existingSoulLevel := 0
+			while existingSoulLevel < level
+				if existingSoulLevel > 0 && SCSG.soulGemReplaceSoul == 0
+					break
+				endif
+				if eval availGems[capacity][existingSoulLevel] >= SCSG.capturedSouls[level]
+					let count := SCSG.capturedSouls[level]
+				else
+					let count := availGems[capacity][existingSoulLevel]
+				endif
+				if count
+					let gemsToAdd[capacity][level] += count
+					let gemsToRemove[capacity][existingSoulLevel] += count
+					let availGems[capacity][existingSoulLevel] -= count
+					let SCSG.capturedSouls[level] -= count
+					let fillCount += count
+					let soulSize := level
+				endif
+				let existingSoulLevel += 1
+			loop
+			let capacity += 1
+		loop
+
+		; Replace soul in Azura's Star last
+		if useAzurasStarAsGem && SCSG.soulGemReplaceSoul && azurasStarLevelNew == 0
+			if eval SCSG.capturedSouls[level] > 0 && level > azurasStarLevelCurrent
+				let SCSG.capturedSouls[level] -= 1
+				let azurasStarLevelNew := level
+				let fillCount += 1
+				let soulSize := level
+			endif
+		endif
+
+		let level -= 1
+	loop
+
+	if SCSG.debug >= 3
+		Call ScsgFnProcessSoulsPrintState SCSG.capturedSouls availGems gemsToAdd gemsToRemove
+		DebugPrint "Shrinking souls to smaller empty gems"
+	endif
+
+	if SCSG.soulGemShrinkToFit
+		let level := 5
+		while level >= 1
+			if eval SCSG.capturedSouls[level]
+				let capacity := level - 1
+				while capacity >= 1
+					let existingSoulLevel := 0
+					while existingSoulLevel < capacity
+						if existingSoulLevel > 0 && SCSG.soulGemReplaceSoul == 0
+							break
+						endif
+						if eval availGems[capacity][existingSoulLevel] >= SCSG.capturedSouls[level]
+							let count := SCSG.capturedSouls[level]
+						else
+							let count := availGems[capacity][existingSoulLevel]
+						endif
+						let gemsToAdd[capacity][capacity] += count ; shrink level to capacity
+						let gemsToRemove[capacity][existingSoulLevel] += count
+						let availGems[capacity][existingSoulLevel] -= count
+						let SCSG.capturedSouls[level] -= count
+						let fillCount += count
+						let soulSize := level
+						let existingSoulLevel += 1
+					loop
+					let capacity -= 1
+				loop
+			endif
+			let level -= 1
+		loop
+
+		if SCSG.debug >= 3
+			Call ScsgFnProcessSoulsPrintState SCSG.capturedSouls availGems gemsToAdd gemsToRemove
+		endif
+	endif
+
+	let capacity := 5
+	while capacity >= 1
+		; Remove all existing basic "empty" gems, some contain captured souls
+		let gemBaseObj := SCSG.gemBaseObjs[capacity][0]
+		let count := Player.GetItemCount gemBaseObj
+		if count
+			if SCSG.debug >= 2
+				DebugPrint "Removing %g basic %n" count gemBaseObj
+			endif
+			let failsafeLoopCount := 0
+			while Player.GetItemCount gemBaseObj
+				let failsafeLoopCount += 1
+				if failsafeLoopCount > 10
+					PrintC "SCSG Error: Failed to remove %n after 10 attempts in ScsgFnProcessSouls" gemBaseObj
+					break
+				endif
+				Call ScsgFnSetInvAmount gemBaseObj 0
+			loop
+		endif
+		; Recreate remaining empty gems to ensure no soul inside
+		let count := availGems[capacity][0]
+		if count
+			if SCSG.debug >= 2
+				DebugPrint "Recreating %g empty %n" count gemBaseObj
+			endif
+			Player.AddItemNS gemBaseObj count
+		endif
+		let capacity -= 1
+	loop
+
+	; Remove gems with souls being replaced
+	let capacity := 5
+	while capacity >= 1
+		let level := capacity
+		while level >= 1
+			let gemBaseObj := SCSG.gemBaseObjs[capacity][level]
+			let count := gemsToRemove[capacity][level]
+			if count
+				DebugPrint "Removing %g %n (level %g/%g)" count gemBaseObj level capacity
+				Player.RemoveItemNS gemBaseObj count
+			endif
+			let level -= 1
+		loop
+		let capacity -= 1
+	loop
+
+	; Create filled gems
+	let capacity := 5
+	while capacity >= 1
+		let level := capacity
+		while level >= 1
+			let gemBaseObj := SCSG.gemBaseObjs[capacity][level]
+			let count := gemsToAdd[capacity][level]
+			if count
+				DebugPrint "Creating %g %n (level %g/%g)" count gemBaseObj level capacity
+				Player.AddItemNS gemBaseObj count
+				let gemSize := capacity
+			endif
+			let level -= 1
+		loop
+		let capacity -= 1
+	loop
+
+	; Assign soul to Azura's Star
+	if useAzurasStarAsGem && azurasStarLevelNew
+		if azurasStarLevelNew == 5
+			DebugPrint "Assigning Grand Soul to Azura's Star"
+		elseif azurasStarLevelNew == 4
+			DebugPrint "Assigning Greater Soul to Azura's Star"
+		elseif azurasStarLevelNew == 3
+			DebugPrint "Assigning Common Soul to Azura's Star"
+		elseif azurasStarLevelNew == 2
+			DebugPrint "Assigning Lesser Soul to Azura's Star"
+		elseif azurasStarLevelNew == 1
+			DebugPrint "Assigning Petty Soul to Azura's Star"
+		endif
+		let SCSG.azurasStarLevel := azurasStarLevelNew
+		let SCSG.azurasStarLevelHasUpdate := 1
+	endif
+
+    if SCSG.showCaptureDetail
+		if fillCount == 1
+			if azurasStarLevelNew
+				let gemBaseObj := AzurasStar
+			else
+				let gemBaseObj := SCSG.gemBaseObjs[gemSize][0]
+			endif
+			if soulSize == 5
+				MessageEx "Grand Soul captured into %n" gemBaseObj 4
+			elseif soulSize == 4
+				MessageEx "Greater Soul captured into %n" gemBaseObj 4
+			elseif soulSize == 3
+				MessageEx "Common Soul captured into %n" gemBaseObj 4
+			elseif soulSize == 2
+				MessageEx "Lesser Soul captured into %n" gemBaseObj 4
+			elseif soulSize == 1
+				MessageEx "Petty Soul captured into %n" gemBaseObj 4
+			endif
+		elseif fillCount == 0
+			let level := 5
+			while level >= 1
+				if eval SCSG.capturedSouls[level]
+					if level == 5
+						MessageEx "Grand Soul released, no gem available" 4
+					elseif level == 4
+						MessageEx "Greater Soul released, no gem available" 4
+					elseif level == 3
+						MessageEx "Common Soul released, no gem available" 4
+					elseif level == 2
+						MessageEx "Lesser Soul released, no gem available" 4
+					elseif level == 1
+						MessageEx "Petty Soul released, no gem available" 4
+					endif
+					break
+				endif
+				let level -= 1
+			loop
+		endif
+    endif
+
+	let level := 5
+	while level >= 1
+		let count := SCSG.capturedSouls[level]
+		if count
+			if level == 5
+				DebugPrint "Releasing %g Grand Soul, no gem available" count
+			elseif level == 4
+				DebugPrint "Releasing %g Greater Soul, no gem available" count
+			elseif level == 3
+				DebugPrint "Releasing %g Common Soul, no gem available" count
+			elseif level == 2
+				DebugPrint "Releasing %g Lesser Soul, no gem available" count
+			elseif level == 1
+				DebugPrint "Releasing %g Petty Soul, no gem available" count
+			endif
+		endif
+		let level -= 1
+	loop
+
+	; Remaining captured souls are released
+	let SCSG.capturedSouls := ar_List 0, 0, 0, 0, 0, 0
+	let SCSG.hasCaptures := 0
+	SetFunctionValue 1
+End

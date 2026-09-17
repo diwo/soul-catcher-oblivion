@@ -1,0 +1,34 @@
+ScriptName ScsgObjEmptySoulGem
+
+short level
+short capacity
+ref baseObj
+short captured
+
+Begin GameMode
+	if GetGameLoaded
+		let SCSG.initDone := 0
+	endif
+	if SCSG.initDone == 0 || GetContainer != PlayerRef
+		return
+	endif
+
+	Call ScsgFnSetInvAmount ScsgSoulCatcher 20
+
+	let level := GetCurrentSoulLevel
+	if level > 0 && captured == 0
+		let captured := 1
+		let baseObj := GetBaseObject
+		let capacity := GetSoulGemCapacity
+		DebugPrint "Found new soul in %n level %g/%g" baseObj level capacity
+		if baseObj != BlackSoulGem || (SCSG.blackSoulGemKeepOnlyGrand && level < 5)
+			let SCSG.capturedSouls[level] += 1
+			let SCSG.hasCaptures := 1
+		else
+			let SCSG.blackCapturedSouls[level] += 1
+		endif
+		if baseObj == BlackSoulGem
+			let SCSG.hasBlackCaptures := 1
+		endif
+	endif
+End

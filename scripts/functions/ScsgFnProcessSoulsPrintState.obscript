@@ -1,0 +1,16 @@
+ScriptName ScsgFnProcessSoulsPrintState
+
+array_var capturedSouls
+array_var availGems
+array_var gemsToAdd
+array_var gemsToRemove
+
+Begin _Function {capturedSouls, availGems, gemsToAdd, gemsToRemove}
+	PrintC "{%g, %g, %g, %g, %g} - Captured Souls" capturedSouls[1] capturedSouls[2] capturedSouls[3] capturedSouls[4] capturedSouls[5]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (no soul)" availGems[1][0] availGems[2][0] availGems[3][0] availGems[4][0] availGems[5][0]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (petty soul)" availGems[1][1] availGems[2][1] availGems[3][1] availGems[4][1] availGems[5][1]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (lesser soul)" availGems[1][2] availGems[2][2] availGems[3][2] availGems[4][2] availGems[5][2]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (common soul)" availGems[1][3] availGems[2][3] availGems[3][3] availGems[4][3] availGems[5][3]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (greater soul)" availGems[1][4] availGems[2][4] availGems[3][4] availGems[4][4] availGems[5][4]
+	PrintC "[%g, %g, %g, %g, %g] - Avail Gems (grand soul)" availGems[1][5] availGems[2][5] availGems[3][5] availGems[4][5] availGems[5][5]
+End

@@ -1,0 +1,29 @@
+ScriptName ScsgFnHandleAzurasStarChargesUpdated
+
+short level
+
+Begin _Function {}
+	if SCSG.azurasStarChargesUpdated == 0 || SCSG.azurasStarLevelUpdated
+		return
+	endif
+	if eval (Player.GetItemCount AzurasStar) == 0
+		return
+	endif
+	if SCSG.azurasStarChargeRate <= 0
+		let SCSG.azurasStarChargesUpdated := 0
+		return
+	endif
+
+	let level := 5
+	while level > 0 && SCSG.azurasStarCharges < SCSG.soulGemCharges[level]
+		let level -= 1
+	loop
+
+	if SCSG.debug >= 2
+		DebugPrint "Recalculating Azura's Star charges=%g/%g level=%g" SCSG.azurasStarCharges SCSG.azurasStarMaxCharges level
+	endif
+	let SCSG.azurasStarLevel := level
+	let SCSG.azurasStarLevelHasUpdate := 1
+	let SCSG.azurasStarChargesUpdated := 0
+	SetFunctionValue 1
+End

@@ -1,0 +1,61 @@
+ScriptName ScsgFnInit
+
+array_var pettyGemBaseObjs
+array_var lesserGemBaseObjs
+array_var commonGemBaseObjs
+array_var greaterGemBaseObjs
+array_var grandGemBaseObjs
+
+Begin Function {}
+	PrintC "Soul Catcher v1.0 loaded"
+
+	let SCSG.initSucceeded := 0
+	if GetOBSEversion < 22
+		PrintC "Soul Catcher failed to initialize, OBSE version 22 or newer required"
+		MessageBoxEx "Soul Catcher failed to load%rOBSE 22 or newer required"
+		return
+	endif
+
+	; Config default values
+	let SCSG.soulGemReplaceSoul := 1
+	let SCSG.soulGemShrinkToFit := 1
+	let SCSG.soulGemKeepOnlyFull := 0
+	let SCSG.blackSoulGemKeepOnlyGrand := 1
+	let SCSG.azurasStarChargeRate := 0.2
+	let SCSG.azurasStarMaxCharges := 3200
+	let SCSG.showCaptureDetail := 1
+	let SCSG.debug := 2
+
+	RunBatchScript "Data\Soul Catcher.ini"
+	SetDebugMode SCSG.debug
+
+	let pettyGemBaseObjs := ar_List SoulGemEmpty1Petty, SoulGem1Petty1PettySoul
+	let lesserGemBaseObjs := ar_List SoulGemEmpty2Lesser, SoulGem2Lesser1PettySoul, SoulGem2Lesser2LesserSoul
+	let commonGemBaseObjs := ar_List SoulGemEmpty3Common, SoulGem3Common1PettySoul, SoulGem3Common2LesserSoul, SoulGem3Common3CommonSoul
+	let greaterGemBaseObjs := ar_List SoulGemEmpty4Greater, SoulGem4Greater1PettySoul, SoulGem4Greater2LesserSoul, SoulGem4Greater3CommonSoul, SoulGem4Greater4GreaterSoul
+	let grandGemBaseObjs := ar_List SoulGemEmpty5Grand, SoulGem5Grand1PettySoul, SoulGem5Grand2LesserSoul, SoulGem5Grand3CommonSoul, SoulGem5Grand4GreaterSoul, SoulGem5Grand5GrandSoul
+	let SCSG.gemBaseObjs := ar_List 0, pettyGemBaseObjs, lesserGemBaseObjs, commonGemBaseObjs, greaterGemBaseObjs, grandGemBaseObjs
+
+	let SCSG.soulGemCharges := ar_List 0, 150, 300, 800, 1200, 1600
+
+	let SCSG.capturedSouls := ar_List 0, 0, 0, 0, 0, 0
+	let SCSG.blackCapturedSouls := ar_List 0, 0, 0, 0, 0, 0
+	let SCSG.hasCaptures := 0
+	let SCSG.hasBlackCaptures := 0
+	let SCSG.azurasStarChargesUpdated := 0
+	let SCSG.azurasStarLevelHasUpdate := 0
+	let SCSG.azurasStarLevelUpdated := 0
+	let SCSG.isDumpingDebugInfo := 0
+
+	Call ScsgFnConvertGems
+
+	let SCSG.fQuestDelayTime := 0.5
+
+	if SCSG.debug
+		Call ScsgFnPrintState
+		DebugPrint "Soul Catcher initialized"
+		Message "Soul Catcher initialized"
+	endif
+
+	let SCSG.initSucceeded := 1
+End

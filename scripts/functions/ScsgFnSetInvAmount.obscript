@@ -1,0 +1,23 @@
+ScriptName ScsgFnSetInvAmount
+
+ref baseObj
+short amount
+short onHandAmount
+short diff
+
+Begin Function {baseObj, amount}
+	let onHandAmount := Player.GetItemCount baseObj
+	if amount > onHandAmount
+		let diff := amount - onHandAmount
+		if SCSG.debug >= 3
+			DebugPrint "Adding %n x %g" baseObj diff
+		endif
+		Player.AddItemNS baseObj diff
+	elseif amount < onHandAmount
+		let diff := onHandAmount - amount
+		if SCSG.debug >= 3
+			DebugPrint "Removing %n x %g" baseObj diff
+		endif
+		Player.RemoveItemNS baseObj diff
+	endif
+End

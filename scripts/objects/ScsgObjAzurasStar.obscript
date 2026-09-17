@@ -1,0 +1,65 @@
+ScriptName ScsgObjAzurasStar
+
+short initialized
+short level
+short prevLevel
+short charges
+
+Begin GameMode
+	if GetGameLoaded
+		let SCSG.initDone := 0
+		let initialized := 0
+	endif
+	if SCSG.initDone == 0 || GetContainer != PlayerRef
+		return
+	endif
+
+	Call ScsgFnSetInvAmount ScsgSoulCatcher 20
+
+	let level := GetCurrentSoulLevel
+
+	if initialized == 0
+		let prevLevel := level
+		let SCSG.azurasStarChargesUpdated := 1
+		let initialized := 1
+		return
+	endif
+
+	if SCSG.azurasStarLevelUpdated
+		if level == SCSG.azurasStarLevel
+			if SCSG.debug >= 2
+				DebugPrint "Confirmed Azura's Star level adjustment from %g to %g" prevLevel level
+			endif
+			let prevLevel := level
+			let SCSG.azurasStarLevelUpdated := 0
+		endif
+		return
+	elseif SCSG.azurasStarChargesUpdated || SCSG.azurasStarLevelHasUpdate
+		return
+	endif
+
+	if prevLevel == 0 && level > 0
+		DebugPrint "Found new soul in Asura's Star level %g/5" level
+		let SCSG.capturedSouls[level] += 1
+		let SCSG.hasCaptures := 1
+		let SCSG.azurasStarLevel := 0
+		let SCSG.azurasStarLevelHasUpdate := 1
+	elseif prevLevel > 0 && level == 0
+		let charges := SCSG.soulGemCharges[prevLevel]
+		let SCSG.azurasStarCharges -= charges
+		if SCSG.azurasStarCharges < 0
+			let SCSG.azurasStarCharges := 0
+		endif
+		DebugPrint "Azura's Star charges reduced by %g to %g/%g" charges SCSG.azurasStarCharges SCSG.azurasStarMaxCharges
+		Message "Charges remaining %.0f/%.0f" SCSG.azurasStarCharges SCSG.azurasStarMaxCharges 3
+		let SCSG.azurasStarChargesUpdated := 1
+	endif
+
+	let prevLevel := level
+End
+
+Begin OnEquip
+	if SCSG.azurasStarChargeRate
+		Message "Charges available %.0f/%.0f" SCSG.azurasStarCharges SCSG.azurasStarMaxCharges 4
+	endif
+End

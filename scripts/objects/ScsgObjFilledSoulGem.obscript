@@ -1,0 +1,12 @@
+ScriptName ScsgObjFilledSoulGem
+
+Begin GameMode
+	if GetGameLoaded
+		let SCSG.initDone := 0
+	endif
+	if SCSG.initDone == 0 || GetContainer != PlayerRef || SCSG.soulGemReplaceSoul == 0
+		return
+	endif
+
+	Call ScsgFnSetInvAmount ScsgSoulCatcher 20
+End

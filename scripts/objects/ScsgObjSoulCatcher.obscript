@@ -1,0 +1,46 @@
+ScriptName ScsgObjSoulCatcher
+
+short level
+short captured
+
+Begin GameMode
+	if GetGameLoaded
+		let SCSG.initDone := 0
+	endif
+	if SCSG.initDone == 0 || GetContainer != PlayerRef
+		return
+	endif
+
+	let level := GetCurrentSoulLevel
+	if level > 0 && captured == 0
+		let captured := 1
+		let SCSG.capturedSouls[level] += 1
+		let SCSG.hasCaptures := 1
+		DebugPrint "Found new soul in Soul Catcher level %g/5" level
+		return
+	endif
+
+	if eval (Player.GetItemCount AzurasStar) > 1
+		DebugPrint "Removing extra Azura's Stars" level
+		Call ScsgFnSetInvAmount AzurasStar 1
+		return
+	endif
+
+	if eval Call ScsgFnHandleAzurasStarChargesUpdated
+		return
+	endif
+	if eval Call ScsgFnHandleAzurasStarLevelHasUpdate
+		return
+	endif
+
+	Call ScsgFnProcessSouls
+	Call ScsgFnConvertBlackSoulGems
+End
+
+Begin MenuMode 1002 ; Inventory
+	Call ScsgFnSetInvAmount ScsgSoulCatcher 0
+End
+
+Begin MenuMode 1008 ; Container/Barter
+	Call ScsgFnSetInvAmount ScsgSoulCatcher 0
+End

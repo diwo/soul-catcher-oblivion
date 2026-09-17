@@ -1,0 +1,67 @@
+ScriptName ScsgFnConvertGems
+
+short capacity
+short level
+short gemCount
+short emptyGemCount
+array_var kv
+array_var gemRefs
+ref gemRef
+ref gemBaseObj
+ref filledGem
+short failsafeLoopCount
+
+Begin Function {}
+	DebugPrint "Converting Soul Gems..."
+	if SCSG.blackSoulGemKeepOnlyGrand
+		let capacity := 6
+	else
+		let capacity := 5
+	endif
+	while capacity >= 1
+		if capacity == 6
+			let gemBaseObj := BlackSoulGem
+		else
+			let gemBaseObj := SCSG.gemBaseObjs[capacity][0]
+		endif
+		let gemRefs := Player.GetInvRefsForItem gemBaseObj
+		let emptyGemCount := 0
+		foreach kv <- gemRefs
+			let gemRef := kv["value"]
+			let gemCount := gemRef.GetRefCount
+			let level := gemRef.GetCurrentSoulLevel
+			if (capacity < 6 && level > 0) || (capacity == 6 && level == 5)
+				if capacity < 6
+					let filledGem := SCSG.gemBaseObjs[capacity][level]
+					DebugPrint "Converting %n (size %g/%g) into stackable version" gemRef level capacity
+				else
+					let filledGem := BlackSoulGemFilled
+					DebugPrint "Converting %n (size %g/5) into stackable version" gemRef level
+				endif
+				Player.AddItemNS filledGem gemCount
+			else
+				let emptyGemCount += gemCount
+			endif
+		loop
+
+		if Player.GetItemCount gemBaseObj
+			DebugPrint "Removing all basic %n" gemBaseObj
+			let failsafeLoopCount := 0
+			while Player.GetItemCount gemBaseObj
+				let failsafeLoopCount += 1
+				if failsafeLoopCount >= 10
+					PrintC "SCSG Error: Failed to remove %n after 10 attempts in ScsgFnConvertGems" gemBaseObj
+					break
+				endif
+				Call ScsgFnSetInvAmount gemBaseObj 0
+			loop
+		endif
+
+		if emptyGemCount
+			DebugPrint "Adding %g empty %n" emptyGemCount gemBaseObj
+			Call ScsgFnSetInvAmount gemBaseObj emptyGemCount
+		endif
+
+		let capacity -= 1
+	loop
+End

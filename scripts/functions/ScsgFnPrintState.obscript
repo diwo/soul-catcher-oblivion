@@ -1,0 +1,24 @@
+ScriptName ScsgFnPrintState
+
+short azurasStarOwned
+short azurasStarLevel
+array_var itemRefs
+ref itemRef
+
+Begin _Function {}
+	PrintC "---------- Soul Catcher State ----------"
+	let azurasStarOwned := Player.GetItemCount AzurasStar
+	let azurasStarLevel := 0
+	let itemRefs := Player.GetInvRefsForItem AzurasStar
+	if eval (ar_Size itemRefs) == 1
+		let itemRef := itemRefs[0]
+		let azurasStarLevel := itemRef.GetCurrentSoulLevel
+	endif
+
+	PrintC "Azura's Star owned=%g level=%g levelPending=%g charge=%g/%g" azurasStarOwned azurasStarLevel SCSG.azurasStarLevel SCSG.azurasStarCharges SCSG.azurasStarMaxCharges
+	PrintC "Soul Catcher count=%g" (Player.GetItemCount ScsgSoulCatcher)
+	PrintC "soulGemReplaceSoul=%g soulGemShrinkToFit=%g soulGemKeepOnlyFull=%g blackSoulGemKeepOnlyGrand=%g azurasStarChargeRate=%g" SCSG.soulGemReplaceSoul SCSG.soulGemShrinkToFit SCSG.soulGemKeepOnlyFull SCSG.blackSoulGemKeepOnlyGrand SCSG.azurasStarChargeRate
+	PrintC "hasCaptures=%g hasBlackCaptures=%g azurasStarChargesUpdated=%g azurasStarLevelHasUpdate=%g azurasStarLevelUpdated=%g" SCSG.hasCaptures SCSG.hasBlackCaptures SCSG.azurasStarChargesUpdated SCSG.azurasStarLevelHasUpdate SCSG.azurasStarLevelUpdated
+
+	PrintC "----------"
+End

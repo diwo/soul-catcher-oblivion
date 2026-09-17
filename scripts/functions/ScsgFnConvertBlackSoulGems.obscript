@@ -1,0 +1,57 @@
+ScriptName ScsgFnConvertBlackSoulGems
+
+short gemCount
+short grandGemCount
+short nonGrandGemCount
+array_var kv
+ref gemRef
+short failsafeLoopCount
+
+Begin _Function {}
+	if SCSG.hasBlackCaptures == 0
+		return
+	endif
+
+	Call ScsgFnAddAzurasStarChargesBlack
+	let SCSG.blackCapturedSouls := ar_List 0, 0, 0, 0, 0, 0
+	let SCSG.hasBlackCaptures := 0
+
+	if SCSG.blackSoulGemKeepOnlyGrand == 0
+		return
+	endif
+
+	let grandGemCount := 0
+	let nonGrandGemCount := 0
+	foreach kv <- Player.GetInvRefsForItem BlackSoulGem
+		let gemRef := kv["value"]
+		let gemCount := gemRef.GetRefCount
+		if eval gemRef.GetCurrentSoulLevel == 5
+			let grandGemCount += gemCount
+		else
+			let nonGrandGemCount += gemCount
+		endif
+	loop
+
+	if grandGemCount > 0
+		DebugPrint "Creating %g filled Black Soul Gem" grandGemCount
+		Player.AddItemNS BlackSoulGemFilled grandGemCount
+	endif
+
+	if SCSG.debug >= 2
+		DebugPrint "Removing %g basic Black Soul Gem" (Player.GetItemCount BlackSoulGem)
+	endif
+	let failsafeLoopCount := 0
+	while Player.GetItemCount BlackSoulGem
+		let failsafeLoopCount += 1
+		if failsafeLoopCount >= 10
+			PrintC "SCSG Error: Failed to remove Black Soul Gem after 10 attempts in ScsgFnConvertBlackSoulGems"
+			break
+		endif
+		Call ScsgFnSetInvAmount BlackSoulGem 0
+	loop
+
+	if SCSG.debug >= 2
+		DebugPrint "Recreating %g empty Black Soul Gem" nonGrandGemCount
+	endif
+	Call ScsgFnSetInvAmount BlackSoulGem nonGrandGemCount
+End
