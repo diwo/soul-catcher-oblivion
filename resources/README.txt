@@ -1,4 +1,4 @@
-== Soul Catcher v1.0 ==
+== Soul Catcher v1.1 ==
 
 This mod changes how soul gems are selected when capturing souls so that you can spend less time making
 sure high quality gems are not wasted on petty souls and let the gems fill themselves up naturally.
@@ -15,3 +15,11 @@ Soul Catcher comes with the following configurable tweaks:
 
 == Requirements ==
 * OBSE version 22 or newer
+
+== Changelog ==
+
+v1.1:
+* Rebalanced soul gem price such that partially filled soul gems are worth at least as much as an empty one of the same capacity.
+
+v1.0:
+* Initial Release

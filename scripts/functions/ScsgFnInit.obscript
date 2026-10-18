@@ -7,7 +7,7 @@ array_var greaterGemBaseObjs
 array_var grandGemBaseObjs
 
 Begin Function {}
-	PrintC "Soul Catcher v1.0 loaded"
+	PrintC "Soul Catcher v1.1 loaded"
 
 	let SCSG.initSucceeded := 0
 	if GetOBSEversion < 22
